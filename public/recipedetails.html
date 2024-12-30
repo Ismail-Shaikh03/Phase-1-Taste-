@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recipe Details</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="navbar-container"></div> <!-- Navbar will be injected here -->
+  <h1>Recipe Details</h1>
+  <div id="recipe-details"></div> <!-- Recipe details will be displayed here -->
+
+  <script>
+    // Fetch and inject navbar
+    fetch('nav.html')
+      .then(response => response.text())
+      .then(data => document.getElementById('navbar-container').innerHTML = data)
+      .catch(error => console.error('Error loading navbar:', error));
+
+    // Function to fetch recipe details based on the id passed in the URL
+    function fetchRecipeDetails(id) {
+      return fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`)
+        .then(response => response.json())
+        .then(data => data.meals[0]);
+    }
+
+    // Display recipe details
+    function displayRecipeDetails(meal) {
+      const container = document.getElementById('recipe-details');
+      container.innerHTML = `
+        <h2>${meal.strMeal}</h2>
+        <img src="${meal.strMealThumb}" alt="${meal.strMeal}" />
+        <p><strong>Category:</strong> ${meal.strCategory}</p>
+        <p><strong>Area:</strong> ${meal.strArea}</p>
+        <p><strong>Instructions:</strong> ${meal.strInstructions}</p>
+        <a href="${meal.strYoutube}" target="_blank">Watch Recipe Video</a>
+      `;
+    }
+
+    // Get the meal ID from the URL query string
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+
+    // Load and display recipe details when the page loads
+    window.onload = function() {
+      fetchRecipeDetails(id).then(meal => displayRecipeDetails(meal)).catch(error => console.error('Error loading recipe:', error));
+    };
+  </script>
+</body>
+</html>
+
