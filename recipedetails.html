@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recipe Details</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="recipedetails.css"> 
+</head>
+<body>
+  <!-- Navbar will be injected here -->
+  <div id="navbar-container"></div>
+
+  <!-- Recipe Header Section -->
+  <div class="recipe-header">
+    <h1>Recipe Details</h1>
+  </div>
+
+  <!-- Recipe Details Section -->
+  <div id="recipe-details" class="recipe-details-container">
+    <!-- Recipe details will be displayed here -->
+  </div>
+
+  <script>
+    // Fetch and inject navbar
+    fetch('nav.html')
+      .then(response => response.text())
+      .then(data => document.getElementById('navbar-container').innerHTML = data)
+      .catch(error => console.error('Error loading navbar:', error));
+
+    // Function to fetch recipe details based on the id passed in the URL
+    function fetchRecipeDetails(id) {
+      return fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`)
+        .then(response => response.json())
+        .then(data => data.meals[0]);
+    }
+
+    // Display recipe details
+    function displayRecipeDetails(meal) {
+      const container = document.getElementById('recipe-details');
+      container.innerHTML = `
+        <div class="recipe-card">
+          <h2>${meal.strMeal}</h2>
+          <img class="recipe-image" src="${meal.strMealThumb}" alt="${meal.strMeal}" />
+          <p><strong>Category:</strong> ${meal.strCategory}</p>
+          <p><strong>Area:</strong> ${meal.strArea}</p>
+          <p><strong>Instructions:</strong> ${meal.strInstructions}</p>
+          <a class="recipe-video-link" href="${meal.strYoutube}" target="_blank">Watch Recipe Video</a>
+        </div>
+      `;
+    }
+
+    // Get the meal ID from the URL query string
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+
+    // Load and display recipe details when the page loads
+    window.onload = function() {
+      if (id) {
+        fetchRecipeDetails(id).then(meal => displayRecipeDetails(meal)).catch(error => console.error('Error loading recipe:', error));
+      } else {
+        document.getElementById('recipe-details').innerHTML = '<p>Recipe not found.</p>';
+      }
+    };
+  </script>
+</body>
+</html>
+

@@ -3,6 +3,7 @@ const mysql = require('mysql2');
 const cors = require('cors');
 const path = require('path');
 const app = express();
+const port = 3000;  // Changed to port 80 for public access
 
 // Enable CORS to allow frontend requests from different origins
 app.use(cors());
@@ -98,15 +99,12 @@ app.get('/api/areas', (req, res) => {
   });
 });
 
-// Start the server on port 3000
-app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
+// Handle undefined routes (404 error)
+app.use((req, res) => {
+  res.status(404).send('Page not found');
 });
 
-
-
-
-
-
-
-
+// Start the server on port 80
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running on http://localhost:${port}`);
+});
