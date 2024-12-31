@@ -1,50 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recipes</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Recipes</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="navbar-container"></div> <!-- Navbar will be injected here -->
-  <h1>All Recipes</h1>
-  <div id="meals-container"></div> <!-- Meals will be displayed here -->
+    <!-- Custom Navbar -->
+    <div id="navbar-container">
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/recipes">Recipes</a></li>
+                <li><a href="/contact">Contact</a></li>
+                <li><a href="/about">About</a></li>
+            </ul>
+        </nav>
+    </div>
 
-  <script>
-    // Fetch and inject navbar
-    fetch('nav.html')
-      .then(response => response.text())
-      .then(data => document.getElementById('navbar-container').innerHTML = data)
-      .catch(error => console.error('Error loading navbar:', error));
+    <!-- Filter Section -->
+    <div class="filter-container">
+        <label for="category">Category:</label>
+        <select id="category">
+            <option value="">Loading...</option>
+        </select>
 
-    // Function to fetch and display meals (similar to index.html)
-    function fetchMeals() {
-      return fetch('http://localhost:3000/api/meals')
-        .then(response => response.json())
-        .then(data => data);
-    }
+        <label for="area">Area:</label>
+        <select id="area">
+            <option value="">Loading...</option>
+        </select>
 
-    function displayMeals(meals) {
-      const container = document.getElementById('meals-container');
-      meals.forEach(meal => {
-        const mealDiv = document.createElement('div');
-        mealDiv.classList.add('meal');
-        mealDiv.innerHTML = `
-          <h2>${meal.strMeal}</h2>
-          <img src="${meal.strMealThumb}" alt="${meal.strMeal}" />
-          <p><strong>Category:</strong> ${meal.strCategory}</p>
-          <p><strong>Area:</strong> ${meal.strArea}</p>
-          <a href="recipedetails.html?id=${meal.idMeal}" class="btn btn-primary">More Details</a>
-        `;
-        container.appendChild(mealDiv);
-      });
-    }
+        <label for="search">Search:</label>
+        <input type="text" id="search" placeholder="Search meals..." oninput="filterMeals()">
+        
+        <button onclick="filterMeals()">Apply Filters</button>
+    </div>
 
-    window.onload = function() {
-      fetchMeals().then(meals => displayMeals(meals)).catch(error => console.error('Error loading meals:', error));
-    };
-  </script>
+    <h1>Welcome to Meal Recipes</h1>
+    <div id="meals-container"></div>  <!-- Meals will be displayed here -->
+
+    <script>
+        // Fetch navbar and inject it into the page
+        fetch('nav.html')
+            .then(response => response.text())
+            .then(data => document.getElementById('navbar-container').innerHTML = data)
+            .catch(error => console.error('Error loading navbar:', error));
+
+        // Fetch categories and populate the category dropdown
+        fetch('/api/categories')
+            .then(response => response.json())
+            .then(categories => {
+                const categorySelect = document.getElementById('category');
+                categorySelect.innerHTML = `<option value="">All</option>`;
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.strCategory;
+                    option.textContent = category.strCategory;
+                    categorySelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching categories:', error));
+
+        // Fetch areas and populate the area dropdown
+        fetch('/api/areas')
+            .then(response => response.json())
+            .then(areas => {
+                const areaSelect = document.getElementById('area');
+                areaSelect.innerHTML = `<option value="">All</option>`;
+                areas.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.strArea;
+                    option.textContent = area.strArea;
+                    areaSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching areas:', error));
+
+        // Function to fetch meals based on filters and search
+        function filterMeals() {
+            const category = document.getElementById('category').value;
+            const area = document.getElementById('area').value;
+            const search = document.getElementById('search').value;
+
+            // Build the query string based on selected filters and search term
+            let query = `/api/meals?`;
+            if (category) query += `category=${category}&`;
+            if (area) query += `area=${area}&`;
+            if (search) query += `search=${search}`;
+
+            // Fetch meals with the selected filters and search term
+            fetch(query)
+                .then(response => response.json())
+                .then(meals => displayMeals(meals))
+                .catch(error => console.error('Error fetching meals:', error));
+        }
+
+        // Function to display meals on the page
+        function displayMeals(meals) {
+            const container = document.getElementById('meals-container');
+            container.innerHTML = '';  // Clear current meals
+
+            meals.forEach(meal => {
+                const mealDiv = document.createElement('div');
+                mealDiv.classList.add('meal');
+                mealDiv.innerHTML = `
+                    <h2>${meal.strMeal}</h2>
+                    <img src="${meal.strMealThumb}" alt="${meal.strMeal}" />
+                    <p><strong>Category:</strong> ${meal.strCategory}</p>
+                    <p><strong>Area:</strong> ${meal.strArea}</p>
+                    <p><strong>Instructions:</strong> ${meal.strInstructions}</p>
+                    <a href="${meal.strYoutube}" target="_blank">Watch Recipe Video</a>
+                `;
+                container.appendChild(mealDiv);
+            });
+        }
+
+        // Initially load all meals
+        window.onload = function() {
+            filterMeals();  // Load meals with no filters at first
+        };
+    </script>
 </body>
 </html>
+
+
+
 
