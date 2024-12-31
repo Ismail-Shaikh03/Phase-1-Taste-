@@ -3,13 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recipes</title>
+  <title>Meal Recipes</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Custom Navbar -->
   <div id="navbar-container"></div> <!-- Navbar will be injected here -->
+
+  <!-- Filter Section for Home Page -->
+  <div class="filter-container">
+    <label for="category">Category:</label>
+    <select id="category">
+      <option value="">Loading...</option>
+    </select>
+
+    <label for="area">Area:</label>
+    <select id="area">
+      <option value="">Loading...</option>
+    </select>
+
+    <label for="search">Search:</label>
+    <input type="text" id="search" placeholder="Search meals..." oninput="filterMeals()">
+    
+    <button onclick="filterMeals()">Apply Filters</button>
+  </div>
+
   <h1>All Recipes</h1>
-  <div id="meals-container"></div> <!-- Meals will be displayed here -->
+  <div id="meals-container"></div>  <!-- Meals will be displayed here -->
 
   <script>
     // Fetch and inject navbar
@@ -18,15 +38,60 @@
       .then(data => document.getElementById('navbar-container').innerHTML = data)
       .catch(error => console.error('Error loading navbar:', error));
 
-    // Function to fetch and display meals (similar to index.html)
-    function fetchMeals() {
-      return fetch('http://localhost:3000/api/meals')
+    // Fetch categories and populate the category dropdown
+    fetch('/api/categories')
+      .then(response => response.json())
+      .then(categories => {
+        const categorySelect = document.getElementById('category');
+        categorySelect.innerHTML = `<option value="">All</option>`;
+        categories.forEach(category => {
+          const option = document.createElement('option');
+          option.value = category.strCategory;
+          option.textContent = category.strCategory;
+          categorySelect.appendChild(option);
+        });
+      })
+      .catch(error => console.error('Error fetching categories:', error));
+
+    // Fetch areas and populate the area dropdown
+    fetch('/api/areas')
+      .then(response => response.json())
+      .then(areas => {
+        const areaSelect = document.getElementById('area');
+        areaSelect.innerHTML = `<option value="">All</option>`;
+        areas.forEach(area => {
+          const option = document.createElement('option');
+          option.value = area.strArea;
+          option.textContent = area.strArea;
+          areaSelect.appendChild(option);
+        });
+      })
+      .catch(error => console.error('Error fetching areas:', error));
+
+    // Function to fetch meals based on filters and search
+    function filterMeals() {
+      const category = document.getElementById('category').value;
+      const area = document.getElementById('area').value;
+      const search = document.getElementById('search').value;
+
+      // Build the query string based on selected filters and search term
+      let query = `/api/meals?`;
+      if (category) query += `category=${category}&`;
+      if (area) query += `area=${area}&`;
+      if (search) query += `search=${search}`;
+
+      // Fetch meals with the selected filters and search term
+      fetch(query)
         .then(response => response.json())
-        .then(data => data);
+        .then(meals => displayMeals(meals))
+        .catch(error => console.error('Error fetching meals:', error));
     }
 
+    // Function to display meals on the page
     function displayMeals(meals) {
       const container = document.getElementById('meals-container');
+      container.innerHTML = '';  // Clear current meals
+
       meals.forEach(meal => {
         const mealDiv = document.createElement('div');
         mealDiv.classList.add('meal');
@@ -41,9 +106,11 @@
       });
     }
 
+    // Initially load all meals
     window.onload = function() {
-      fetchMeals().then(meals => displayMeals(meals)).catch(error => console.error('Error loading meals:', error));
+      filterMeals();  // Load meals with no filters at first
     };
   </script>
 </body>
 </html>
+

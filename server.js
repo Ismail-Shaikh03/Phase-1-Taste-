@@ -7,15 +7,15 @@ const app = express();
 // Enable CORS to allow frontend requests from different origins
 app.use(cors());
 
-// Serve static files from the "public" folder
+// Serve static files (like CSS, JS, images) from the "public" folder
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MySQL database connection
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'admin',              // MySQL username
-  password: 'Recipeproject1!', // MySQL password
-  database: 'meal_db'         // Database name
+  host: 'localhost',            // MySQL host (localhost in this case)
+  user: 'admin',                // MySQL username
+  password: 'Recipeproject1!',  // MySQL password
+  database: 'meal_db'           // Database name
 });
 
 // Connect to MySQL
@@ -27,9 +27,19 @@ db.connect((err) => {
   console.log('Connected to MySQL database.');
 });
 
+// Serve the home.html page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'home.html'));  // Serve home.html from the public folder
+});
+
+// Serve the recipes.html page
+app.get('/recipes', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'recipes.html'));  // Serve recipes.html from the public folder
+});
+
 // API route to get meals data with filtering and search
 app.get('/api/meals', (req, res) => {
-  let { category, area, search } = req.query;
+  let { category, area, search } = req.query;  // Capture filter parameters from query string
 
   // Base SQL query for meals
   let sqlQuery = 'SELECT * FROM meals';
@@ -56,17 +66,17 @@ app.get('/api/meals', (req, res) => {
     sqlQuery += ' WHERE ' + filters.join(' AND ');
   }
 
-  // No pagination: fetch all meals
+  // Fetch meals based on the filters and search query
   db.query(sqlQuery, params, (err, results) => {
     if (err) {
       res.status(500).send('Error fetching meal data');
       return;
     }
-    res.json(results); // Send all meal data as JSON
+    res.json(results); // Send filtered recipes as JSON
   });
 });
 
-// API route to get all categories
+// API route to get categories for filtering
 app.get('/api/categories', (req, res) => {
   db.query('SELECT DISTINCT strCategory FROM meals', (err, results) => {
     if (err) {
@@ -77,7 +87,7 @@ app.get('/api/categories', (req, res) => {
   });
 });
 
-// API route to get all areas
+// API route to get areas for filtering
 app.get('/api/areas', (req, res) => {
   db.query('SELECT DISTINCT strArea FROM meals', (err, results) => {
     if (err) {
@@ -88,15 +98,11 @@ app.get('/api/areas', (req, res) => {
   });
 });
 
-// Handle the root ("/") route to serve "home.html"
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'home.html')); // Serve home.html from the public folder
-});
-
 // Start the server on port 3000
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
 });
+
 
 
 
