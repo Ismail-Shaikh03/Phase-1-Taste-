@@ -11,22 +11,16 @@ app.use(cors());
 // Serve static files (like CSS, JS, images) from the "public" folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// MySQL database connection
-const db = mysql.createConnection({
+// Create a MySQL connection pool
+const pool = mysql.createPool({
   host: 'localhost',            // MySQL host (localhost in this case)
   user: 'admin',                // MySQL username
   password: 'Recipeproject1!',  // MySQL password
-  database: 'meal_db'           // Database name
-});
-
-// Connect to MySQL
-db.connect((err) => {
-  if (err) {
-    console.error('Error connecting to the database:', err.stack);
-    return;
-  }
-  console.log('Connected to MySQL database.');
-});
+  database: 'meal_db',
+  waitForConnections: true,
+  connectionLimit: 10,          // Limit the number of connections
+  queueLimit: 0                 // Queue limit for waiting connections
+}).promise(); // Use promise-based queries for cleaner code
 
 // Serve the home.html page
 app.get('/', (req, res) => {
@@ -49,13 +43,11 @@ app.get('/recipes', (req, res) => {
 });
 
 // API route to get meals data with filtering and search
-app.get('/api/meals', (req, res) => {
+app.get('/api/meals', async (req, res) => {
   let { category, area, search } = req.query;  // Capture filter parameters from query string
 
   // Base SQL query for meals
   let sqlQuery = 'SELECT * FROM meals';
-
-  // Build dynamic query with filters and search
   let filters = [];
   let params = [];
 
@@ -77,39 +69,35 @@ app.get('/api/meals', (req, res) => {
     sqlQuery += ' WHERE ' + filters.join(' AND ');
   }
 
-  // Fetch meals based on the filters and search query
-  db.query(sqlQuery, params, (err, results) => {
-    if (err) {
-      console.error('Error fetching meal data:', err);
-      res.status(500).json({ error: 'Error fetching meal data', details: err.message });
-      return;
-    }
+  try {
+    const [results] = await pool.query(sqlQuery, params);
     res.json(results); // Send filtered recipes as JSON
-  });
+  } catch (err) {
+    console.error('Error fetching meal data:', err);
+    res.status(500).json({ error: 'Error fetching meal data', details: err.message });
+  }
 });
 
 // API route to get categories for filtering
-app.get('/api/categories', (req, res) => {
-  db.query('SELECT DISTINCT strCategory FROM meals', (err, results) => {
-    if (err) {
-      console.error('Error fetching categories:', err);
-      res.status(500).json({ error: 'Error fetching categories', details: err.message });
-      return;
-    }
+app.get('/api/categories', async (req, res) => {
+  try {
+    const [results] = await pool.query('SELECT DISTINCT strCategory FROM meals');
     res.json(results); // Send the distinct categories as JSON
-  });
+  } catch (err) {
+    console.error('Error fetching categories:', err);
+    res.status(500).json({ error: 'Error fetching categories', details: err.message });
+  }
 });
 
 // API route to get areas for filtering
-app.get('/api/areas', (req, res) => {
-  db.query('SELECT DISTINCT strArea FROM meals', (err, results) => {
-    if (err) {
-      console.error('Error fetching areas:', err);
-      res.status(500).json({ error: 'Error fetching areas', details: err.message });
-      return;
-    }
+app.get('/api/areas', async (req, res) => {
+  try {
+    const [results] = await pool.query('SELECT DISTINCT strArea FROM meals');
     res.json(results); // Send the distinct areas as JSON
-  });
+  } catch (err) {
+    console.error('Error fetching areas:', err);
+    res.status(500).json({ error: 'Error fetching areas', details: err.message });
+  }
 });
 
 // Handle undefined routes (404 error)
