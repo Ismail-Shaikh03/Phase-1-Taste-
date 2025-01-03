@@ -3,7 +3,7 @@ const mysql = require('mysql2');
 const cors = require('cors');
 const path = require('path');
 const app = express();
-const port = 3000;  // Changed to port 80 for public access
+const port = 3000;  // Using port 3000 for local testing
 
 // Enable CORS to allow frontend requests from different origins
 app.use(cors());
@@ -22,7 +22,7 @@ const db = mysql.createConnection({
 // Connect to MySQL
 db.connect((err) => {
   if (err) {
-    console.error('Error connecting to the database: ' + err.stack);
+    console.error('Error connecting to the database:', err.stack);
     return;
   }
   console.log('Connected to MySQL database.');
@@ -30,12 +30,22 @@ db.connect((err) => {
 
 // Serve the home.html page
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'home.html'));  // Serve home.html from the public folder
+  res.sendFile(path.join(__dirname, 'public', 'home.html'), (err) => {
+    if (err) {
+      console.error('Error serving home.html:', err);
+      res.status(500).json({ error: 'Error loading homepage' });
+    }
+  });
 });
 
 // Serve the recipes.html page
 app.get('/recipes', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'recipes.html'));  // Serve recipes.html from the public folder
+  res.sendFile(path.join(__dirname, 'public', 'recipes.html'), (err) => {
+    if (err) {
+      console.error('Error serving recipes.html:', err);
+      res.status(500).json({ error: 'Error loading recipes page' });
+    }
+  });
 });
 
 // API route to get meals data with filtering and search
@@ -59,7 +69,7 @@ app.get('/api/meals', (req, res) => {
   }
   if (search) {
     filters.push('(strMeal LIKE ? OR strCategory LIKE ? OR strArea LIKE ?)');
-    const searchValue = '%' + search + '%';
+    const searchValue = `%${search}%`;
     params.push(searchValue, searchValue, searchValue);
   }
 
@@ -70,7 +80,8 @@ app.get('/api/meals', (req, res) => {
   // Fetch meals based on the filters and search query
   db.query(sqlQuery, params, (err, results) => {
     if (err) {
-      res.status(500).send('Error fetching meal data');
+      console.error('Error fetching meal data:', err);
+      res.status(500).json({ error: 'Error fetching meal data', details: err.message });
       return;
     }
     res.json(results); // Send filtered recipes as JSON
@@ -81,7 +92,8 @@ app.get('/api/meals', (req, res) => {
 app.get('/api/categories', (req, res) => {
   db.query('SELECT DISTINCT strCategory FROM meals', (err, results) => {
     if (err) {
-      res.status(500).send('Error fetching categories');
+      console.error('Error fetching categories:', err);
+      res.status(500).json({ error: 'Error fetching categories', details: err.message });
       return;
     }
     res.json(results); // Send the distinct categories as JSON
@@ -92,7 +104,8 @@ app.get('/api/categories', (req, res) => {
 app.get('/api/areas', (req, res) => {
   db.query('SELECT DISTINCT strArea FROM meals', (err, results) => {
     if (err) {
-      res.status(500).send('Error fetching areas');
+      console.error('Error fetching areas:', err);
+      res.status(500).json({ error: 'Error fetching areas', details: err.message });
       return;
     }
     res.json(results); // Send the distinct areas as JSON
@@ -101,10 +114,10 @@ app.get('/api/areas', (req, res) => {
 
 // Handle undefined routes (404 error)
 app.use((req, res) => {
-  res.status(404).send('Page not found');
+  res.status(404).json({ error: 'Page not found' });
 });
 
-// Start the server on port 80
+// Start the server on port 3000
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on http://localhost:${port}`);
 });
