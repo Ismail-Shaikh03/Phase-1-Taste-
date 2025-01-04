@@ -7,49 +7,53 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Custom Navbar -->
+    <!-- Navbar -->
     <div id="navbar-container">
         <nav>
             <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/recipes">Recipes</a></li>
-                <li><a href="/contact">Contact</a></li>
-                <li><a href="/about">About</a></li>
+                <li><a href="home.html">Home</a></li>
+                <li><a href="recipes.html">Recipes</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="about.html">About</a></li>
             </ul>
         </nav>
     </div>
 
-    <!-- Filter Section -->
-    <div class="filter-container">
-        <label for="category">Category:</label>
-        <select id="category">
-            <option value="">Loading...</option>
-        </select>
+    <main>
+        <!-- Filter Section -->
+        <section class="filter-container">
+            <label for="category">Category:</label>
+            <select id="category">
+                <option value="">Loading...</option>
+            </select>
 
-        <label for="area">Area:</label>
-        <select id="area">
-            <option value="">Loading...</option>
-        </select>
+            <label for="area">Area:</label>
+            <select id="area">
+                <option value="">Loading...</option>
+            </select>
 
-        <label for="search">Search:</label>
-        <input type="text" id="search" placeholder="Search meals..." oninput="filterMeals()">
-        
-        <button onclick="filterMeals()">Apply Filters</button>
-    </div>
+            <label for="search">Search:</label>
+            <input type="text" id="search" placeholder="Search meals..." oninput="filterMeals()">
+            
+            <button onclick="filterMeals()">Apply Filters</button>
+        </section>
 
-    <h1>Welcome to Meal Recipes</h1>
-    <div id="meals-container"></div>  <!-- Meals will be displayed here -->
+        <!-- Meals Section -->
+        <section>
+            <h1>Welcome to Meal Recipes</h1>
+            <div id="meals-container">
+                <div id="loading-spinner" class="spinner">Loading...</div>
+            </div>
+        </section>
+    </main>
 
     <script>
-        // Fetch navbar and inject it into the page
-        fetch('nav.html')
-            .then(response => response.text())
-            .then(data => document.getElementById('navbar-container').innerHTML = data)
-            .catch(error => console.error('Error loading navbar:', error));
-
         // Fetch categories and populate the category dropdown
         fetch('/api/categories')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to fetch categories');
+                return response.json();
+            })
             .then(categories => {
                 const categorySelect = document.getElementById('category');
                 categorySelect.innerHTML = `<option value="">All</option>`;
@@ -60,11 +64,17 @@
                     categorySelect.appendChild(option);
                 });
             })
-            .catch(error => console.error('Error fetching categories:', error));
+            .catch(error => {
+                console.error('Error fetching categories:', error);
+                document.getElementById('category').innerHTML = `<option value="">Error loading categories</option>`;
+            });
 
         // Fetch areas and populate the area dropdown
         fetch('/api/areas')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to fetch areas');
+                return response.json();
+            })
             .then(areas => {
                 const areaSelect = document.getElementById('area');
                 areaSelect.innerHTML = `<option value="">All</option>`;
@@ -75,31 +85,52 @@
                     areaSelect.appendChild(option);
                 });
             })
-            .catch(error => console.error('Error fetching areas:', error));
+            .catch(error => {
+                console.error('Error fetching areas:', error);
+                document.getElementById('area').innerHTML = `<option value="">Error loading areas</option>`;
+            });
 
-        // Function to fetch meals based on filters and search
+        // Fetch meals based on filters and search
         function filterMeals() {
             const category = document.getElementById('category').value;
             const area = document.getElementById('area').value;
             const search = document.getElementById('search').value;
 
-            // Build the query string based on selected filters and search term
-            let query = `/api/meals?`;
-            if (category) query += `category=${category}&`;
-            if (area) query += `area=${area}&`;
-            if (search) query += `search=${search}`;
+            // Show loading spinner
+            const spinner = document.getElementById('loading-spinner');
+            spinner.style.display = 'block';
 
-            // Fetch meals with the selected filters and search term
-            fetch(query)
-                .then(response => response.json())
-                .then(meals => displayMeals(meals))
-                .catch(error => console.error('Error fetching meals:', error));
+            // Build query string
+            const params = new URLSearchParams();
+            if (category) params.append('category', category);
+            if (area) params.append('area', area);
+            if (search) params.append('search', search);
+
+            fetch(`/api/meals?${params.toString()}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to fetch meals');
+                    return response.json();
+                })
+                .then(meals => {
+                    spinner.style.display = 'none'; // Hide spinner
+                    displayMeals(meals);
+                })
+                .catch(error => {
+                    spinner.style.display = 'none'; // Hide spinner
+                    console.error('Error fetching meals:', error);
+                    document.getElementById('meals-container').innerHTML = '<p>Error loading meals.</p>';
+                });
         }
 
-        // Function to display meals on the page
+        // Display meals on the page
         function displayMeals(meals) {
             const container = document.getElementById('meals-container');
-            container.innerHTML = '';  // Clear current meals
+            container.innerHTML = ''; // Clear existing meals
+
+            if (meals.length === 0) {
+                container.innerHTML = '<p>No meals found.</p>';
+                return;
+            }
 
             meals.forEach(meal => {
                 const mealDiv = document.createElement('div');
@@ -110,20 +141,16 @@
                     <p><strong>Category:</strong> ${meal.strCategory}</p>
                     <p><strong>Area:</strong> ${meal.strArea}</p>
                     <p><strong>Instructions:</strong> ${meal.strInstructions}</p>
-                    <a href="${meal.strYoutube}" target="_blank">Watch Recipe Video</a>
+                    <a href="${meal.strYoutube}" target="_blank" rel="noopener noreferrer">Watch Recipe Video</a>
                 `;
                 container.appendChild(mealDiv);
             });
         }
 
-        // Initially load all meals
+        // Load all meals on page load
         window.onload = function() {
-            filterMeals();  // Load meals with no filters at first
+            filterMeals();
         };
     </script>
 </body>
 </html>
-
-
-
-

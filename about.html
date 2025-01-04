@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <div id="navbar-container"></div>
+
+    <!-- About Section -->
+    <main>
+        <section class="about-section">
+            <div class="container">
+                <h1>About Us</h1>
+                <p>
+                    Welcome to <strong>Recipe Explorer</strong>! Our mission is to make cooking easier and more enjoyable by providing you with access to a diverse collection of recipes from around the world.
+                </p>
+                <p>
+                    Whether you're a seasoned chef or just starting your culinary journey, our platform is designed to inspire and guide you. Explore recipes by categories, regions, or your favorite ingredients. Each recipe includes detailed instructions, helpful tips, and even video tutorials.
+                </p>
+                <h2>Our Vision</h2>
+                <p>
+                    We believe that food is a universal language that brings people together. Our vision is to create a community where cooking becomes a shared joy, encouraging creativity and exploration in the kitchen.
+                </p>
+                <h2>Contact Us</h2>
+                <p>Have questions or suggestions? Feel free to reach out:</p>
+                <ul>
+                    <li>Email: <a href="mailto:contact@recipeexplorer.com">contact@recipeexplorer.com</a></li>
+                    <li>Phone: <a href="tel:+1234567890">+1-234-567-890</a></li>
+                    <li>Follow us on social media: 
+                        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">Facebook</a> | 
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">Instagram</a> | 
+                        <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">Twitter</a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Recipe Explorer. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Fetch and inject navbar
+        fetch('nav.html')
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to load navbar');
+                return response.text();
+            })
+            .then(data => document.getElementById('navbar-container').innerHTML = data)
+            .catch(error => console.error('Error loading navbar:', error));
+    </script>
+</body>
+</html>
