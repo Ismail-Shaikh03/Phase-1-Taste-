@@ -25,19 +25,6 @@ Database: MySQL
 
 Hosting: AWS EC2
 
-📁 Project Structure
-.
-├── backend/
-│ ├── server.js
-│ └── routes/
-│ └── meals.js
-├── frontend/
-│ ├── index.html
-│ ├── styles.css
-│ └── script.js
-├── db/
-│ └── schema.sql
-└── README.md
 
 🛠️ Getting Started
 Prerequisites
